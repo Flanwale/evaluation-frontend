@@ -32,7 +32,7 @@ export function VisitProvider({ children }: { children: React.ReactNode }) {
     const run = async () => {
       setLoadingStructure(true);
       try {
-        const sRes = await fetch("http://localhost:8000/api/structure");
+        const sRes = await fetch("/api/structure");
         if (sRes.ok) {
           const data = await sRes.json();
           const list = Array.isArray(data) ? data : [];

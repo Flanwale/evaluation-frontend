@@ -26,7 +26,13 @@ type Box = {
 type Stage = "idle" | "processing" | "done" | "error";
 type ViewMode = "table" | "form";
 
-const toArray = <T,>(v: any): T[] => (Array.isArray(v) ? v : []);
+type Nullable<T> = T | null | undefined;
+
+const toArray = <T,>(v: Nullable<T | T[]>): T[] => {
+  if (Array.isArray(v)) return v;
+  if (v == null) return [];
+  return [v];
+};
 
 const TEMPLATE_BOXES: Record<string, Omit<Box, "id" | "key" | "label">> = {
   outp_num: { x: 0.188, y: 0.158, w: 0.127, h: 0.063 },
@@ -387,7 +393,7 @@ export function PhotoIntakeInlineDemo(props: Props) {
                 )}
                 {stage === "done" && (
                   <div className="absolute inset-0 pointer-events-none">
-                    {toArray(boxes).map((b) => {
+                    {toArray<Box>(boxes).map((b) => {
                       const left = b.x * imgRect.w;
                       const top = b.y * imgRect.h;
                       const w = b.w * imgRect.w;

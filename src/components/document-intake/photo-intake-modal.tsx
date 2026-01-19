@@ -208,7 +208,7 @@ export function PhotoIntakeModal({
       await sleep(300);
 
       setStepIndex(1);
-      const res = await fetch("http://localhost:8000/api/document/intake", {
+      const res = await fetch("/api/document/intake", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ mode, url }),
@@ -263,7 +263,7 @@ export function PhotoIntakeModal({
       form.append("mode", mode);
       files.forEach((f) => form.append("files", f));
 
-      const res = await fetch("http://localhost:8000/api/document/intake", {
+      const res = await fetch("/api/document/intake", {
         method: "POST",
         body: form,
       });

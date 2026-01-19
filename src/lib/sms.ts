@@ -107,16 +107,23 @@ async function sendViaAliyun(phone: string, code: string) {
   const runtime = new $Util.RuntimeOptions({});
 
   console.log(`[Aliyun] sending code to ${cleanPhone} (raw: ${phone})`);
-
   const resp = await client.sendSmsWithOptions(req, runtime);
 
-  if (resp.body.code !== "OK") {
-    console.error("[Aliyun] rejected:", resp.body.message);
-    throw new Error(resp.body.message || "Aliyun SMS rejected");
+  const body = resp.body;
+  if (!body) {
+    console.error("[Aliyun] empty response body:", resp);
+    throw new Error("Aliyun SMS response body is empty");
   }
 
-  console.log("[Aliyun] sent OK, bizId:", resp.body.bizId);
-  return resp.body;
+  if (body.code !== "OK") {
+    console.error("[Aliyun] rejected:", body.message);
+    throw new Error(body.message || "Aliyun SMS rejected");
+  }
+
+
+  console.log("[Aliyun] sent OK, bizId:", body.bizId);
+  return body;
+
 }
 
 // ============ 统一出口 ============
