@@ -40,7 +40,7 @@ export default function UserProfile() {
 
     try {
         // 调用 FastAPI 后端更新
-        const res = await fetch(`http://localhost:8000/api/user/${session.user.id}/profile`, {
+        const res = await fetch(`/api/user/${session.user.id}/profile`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({

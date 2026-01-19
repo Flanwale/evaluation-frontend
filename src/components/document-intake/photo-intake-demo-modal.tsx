@@ -96,11 +96,14 @@ function makeDemoResult(allowedKeys: string[], imageUrl?: string): IntakeDemoRes
 
   const blocks: ParsedBlock[] = [
     { type: "SECTIONHEADER", text: "自动识别结果（演示）" },
-    ...Object.entries(extracted_fields).slice(0, 12).map(([k, v]) => ({
-      type: "TEXT",
-      text: `${k}: ${String(v ?? "")}`,
-    })),
+    ...Object.entries(extracted_fields)
+      .slice(0, 12)
+      .map(([k, v]): ParsedBlock => ({
+        type: "TEXT",
+        text: `${k}: ${String(v ?? "")}`,
+      })),
   ];
+
 
   const htmlItems = Object.entries(extracted_fields)
     .slice(0, 20)
