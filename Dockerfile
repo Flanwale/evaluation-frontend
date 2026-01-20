@@ -74,7 +74,8 @@ ENV DATABASE_URL=${DATABASE_URL}
 
 # ===== ✅ 关键：在 Linux(alpine) 内生成 Prisma Client/Engine =====
 # 注意 schema 路径按你的实际位置改：./prisma/schema.prisma
-RUN npx prisma generate --schema=./prisma/schema.prisma
+RUN npx prisma generate --schema=./prisma/schema.prisma --generator client_js
+
 
 RUN npm run build
 
