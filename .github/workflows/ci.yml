@@ -1,0 +1,32 @@
+name: ci-frontend
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  build_and_push:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Docker Login Harbor
+        run: |
+          echo "${{ secrets.HARBOR_PASS }}" | docker login harbor.vico-lab.com:4443 \
+            -u "${{ secrets.HARBOR_USER }}" --password-stdin
+
+      - name: Build image
+        run: |
+          docker build \
+            -t harbor.vico-lab.com:4443/evaluation/evaluation-frontend:${{ github.sha }} \
+            --build-arg NEXT_PUBLIC_DISABLE_TURNSTILE=1 \
+            --build-arg NEXT_PUBLIC_APP_URL=http://172.16.200.95:32030 \
+            --build-arg BACKEND_ORIGIN=http://evaluation-backend-svc:8000 \
+            --build-arg NEXT_PUBLIC_TURNSTILE_SITE_KEY="" \
+            .
+
+      - name: Push image
+        run: |
+          docker push harbor.vico-lab.com:4443/evaluation/evaluation-frontend:${{ github.sha }}
