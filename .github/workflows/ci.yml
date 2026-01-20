@@ -1,28 +1,43 @@
 name: ci-frontend
 
 on:
+  pull_request:
+    branches: ["main"]
   push:
-    branches: ["main", "feat/frontend-docker-cicd"]
+    branches: ["feat/frontend-docker-cicd"]
   workflow_dispatch:
 
 jobs:
   build_and_push:
     runs-on: self-hosted
+
+    env:
+      REGISTRY: harbor.vico-lab.com:4443
+      IMAGE_REPO: evaluation/evaluation-frontend
+
     steps:
+      - name: Ensure git exists (for checkout/submodules)
+        run: |
+          if ! command -v git >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y git
+          fi
+          git --version
+
       - name: Checkout (with submodules)
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      - name: Docker Login Harbor
+      - name: Docker login Harbor
         run: |
-          echo "${{ secrets.HARBOR_PASS }}" | docker login harbor.vico-lab.com:4443 \
+          echo "${{ secrets.HARBOR_PASS }}" | docker login ${REGISTRY} \
             -u "${{ secrets.HARBOR_USER }}" --password-stdin
 
-      - name: Build image
+      - name: Build image (CI tag = full sha)
         run: |
           docker build \
-            -t harbor.vico-lab.com:4443/evaluation/evaluation-frontend:${{ github.sha }} \
+            -t ${REGISTRY}/${IMAGE_REPO}:${{ github.sha }} \
             --build-arg NEXT_PUBLIC_DISABLE_TURNSTILE=1 \
             --build-arg NEXT_PUBLIC_APP_URL=http://172.16.200.95:32030 \
             --build-arg BACKEND_ORIGIN=http://evaluation-backend-svc:8000 \
@@ -31,4 +46,4 @@ jobs:
 
       - name: Push image
         run: |
-          docker push harbor.vico-lab.com:4443/evaluation/evaluation-frontend:${{ github.sha }}
+          docker push ${REGISTRY}/${IMAGE_REPO}:${{ github.sha }}
