@@ -19,6 +19,7 @@ const nextConfig: NextConfig = {
       { source: "/api/:path*", destination: `${BACKEND_ORIGIN}/api/:path*` },
     ];
   },
+  output: "standalone",
 };
 
 export default nextConfig;
