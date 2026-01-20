@@ -2,15 +2,17 @@ name: ci-frontend
 
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "feat/frontend-docker-cicd"]
   workflow_dispatch:
 
 jobs:
   build_and_push:
     runs-on: self-hosted
     steps:
-      - name: Checkout
+      - name: Checkout (with submodules)
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Docker Login Harbor
         run: |
