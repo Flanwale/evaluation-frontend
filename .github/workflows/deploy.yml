@@ -1,0 +1,57 @@
+name: build-and-deploy-frontend
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build_deploy:
+    runs-on: self-hosted
+
+    env:
+      IMAGE_REPO: evaluation/evaluation-frontend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set tag
+        run: |
+          echo "TAG=${GITHUB_SHA::7}" >> $GITHUB_ENV
+
+      - name: Docker login Harbor
+        run: |
+          echo "${{ secrets.HARBOR_PASSWORD }}" | docker login ${{ secrets.HARBOR_REGISTRY }} -u "${{ secrets.HARBOR_USERNAME }}" --password-stdin
+
+      - name: Build image
+        run: |
+          docker build \
+            -t ${{ secrets.HARBOR_REGISTRY }}/${IMAGE_REPO}:${TAG} \
+            --build-arg NEXT_PUBLIC_DISABLE_TURNSTILE=1 \
+            --build-arg NEXT_PUBLIC_APP_URL=http://172.16.200.95:32030 \
+            --build-arg BACKEND_ORIGIN=http://evaluation-backend-svc:8000 \
+            --build-arg NEXT_PUBLIC_TURNSTILE_SITE_KEY="" \
+            .
+
+      - name: Push image
+        run: |
+          docker push ${{ secrets.HARBOR_REGISTRY }}/${IMAGE_REPO}:${TAG}
+
+      - name: Setup kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG_B64 }}" | base64 -d > ~/.kube/config
+          chmod 600 ~/.kube/config
+          kubectl version --client
+
+      - name: Deploy (set image + rollout)
+        run: |
+          kubectl -n bmi-miva set image deployment/evaluation-frontend frontend=${{ secrets.HARBOR_REGISTRY }}/${IMAGE_REPO}:${TAG}
+          kubectl -n bmi-miva rollout status deployment/evaluation-frontend --timeout=180s
+
+      - name: Smoke test
+        run: |
+          curl -fsS http://172.16.200.95:32030/ >/dev/null
+          echo "Frontend OK"
