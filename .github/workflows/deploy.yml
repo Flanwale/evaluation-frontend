@@ -2,11 +2,11 @@ name: build-and-deploy-frontend
 
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "dev"]
   workflow_dispatch:
 
 concurrency:
-  group: deploy-frontend-main
+  group: deploy-frontend-${{ github.ref_name }}
   cancel-in-progress: true
 
 jobs:
@@ -17,9 +17,15 @@ jobs:
       REGISTRY: harbor.vico-lab.com:4443
       IMAGE_REPO: evaluation/evaluation-frontend
       NAMESPACE: bmi-miva
-      DEPLOYMENT: evaluation-frontend
       CONTAINER: frontend
-      FRONTEND_URL: http://172.16.200.95:32030
+
+      # prod/dev 入口
+      FRONTEND_URL_PROD: http://172.16.200.95:32030
+      FRONTEND_URL_DEV:  http://172.16.200.95:32031
+
+      # prod/dev 后端 service
+      BACKEND_ORIGIN_PROD: http://evaluation-backend-svc:8000
+      BACKEND_ORIGIN_DEV:  http://evaluation-backend-dev-svc:8000
 
     steps:
       - name: Ensure git exists (for checkout/submodules)
@@ -35,10 +41,23 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Set tag (short sha)
+      - name: Set env by branch + tag
         run: |
           echo "TAG=${GITHUB_SHA::7}" >> $GITHUB_ENV
-          echo "Using TAG=${GITHUB_SHA::7}"
+
+          if [ "${GITHUB_REF_NAME}" = "main" ]; then
+            echo "DEPLOYMENT=evaluation-frontend" >> $GITHUB_ENV
+            echo "POD_LABEL=app=evaluation-frontend" >> $GITHUB_ENV
+            echo "FRONTEND_URL=${FRONTEND_URL_PROD}" >> $GITHUB_ENV
+            echo "BACKEND_ORIGIN=${BACKEND_ORIGIN_PROD}" >> $GITHUB_ENV
+          else
+            echo "DEPLOYMENT=evaluation-frontend-dev" >> $GITHUB_ENV
+            echo "POD_LABEL=app=evaluation-frontend-dev" >> $GITHUB_ENV
+            echo "FRONTEND_URL=${FRONTEND_URL_DEV}" >> $GITHUB_ENV
+            echo "BACKEND_ORIGIN=${BACKEND_ORIGIN_DEV}" >> $GITHUB_ENV
+          fi
+
+          echo "Using branch=${GITHUB_REF_NAME} TAG=${GITHUB_SHA::7} DEPLOYMENT=$DEPLOYMENT URL=$FRONTEND_URL"
 
       - name: Docker login Harbor
         run: |
@@ -51,7 +70,7 @@ jobs:
             -t ${REGISTRY}/${IMAGE_REPO}:${TAG} \
             --build-arg NEXT_PUBLIC_DISABLE_TURNSTILE=1 \
             --build-arg NEXT_PUBLIC_APP_URL=${FRONTEND_URL} \
-            --build-arg BACKEND_ORIGIN=http://evaluation-backend-svc:8000 \
+            --build-arg BACKEND_ORIGIN=${BACKEND_ORIGIN} \
             --build-arg NEXT_PUBLIC_TURNSTILE_SITE_KEY="" \
             .
 
@@ -72,7 +91,7 @@ jobs:
           kubectl -n ${NAMESPACE} set image deployment/${DEPLOYMENT} \
             ${CONTAINER}=${REGISTRY}/${IMAGE_REPO}:${TAG}
           kubectl -n ${NAMESPACE} rollout status deployment/${DEPLOYMENT} --timeout=180s
-          kubectl -n ${NAMESPACE} get pods -l app=evaluation-frontend -o wide
+          kubectl -n ${NAMESPACE} get pods -l ${POD_LABEL} -o wide
 
       - name: Smoke test
         run: |
