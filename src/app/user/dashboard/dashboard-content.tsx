@@ -52,6 +52,7 @@ import { useVisit } from "@/components/edc/visit-context";
 import { PhotoIntakeInlineDemo } from "@/components/document-intake/photo-intake-inline-demo";
 import { CRF_E2C2_SCHEMA } from "@/components/forms/crf-schemas";
 import { DEMO_PATIENTS, DEMO_CRF_FIELDS } from "./demo";
+import RiskView from "./risk-view";
 
 
 
@@ -63,7 +64,7 @@ export default function DashboardContent() {
 
   const patientId = searchParams.get("patientId");
   const viewParam = searchParams.get("view");
-  const activeTab = viewParam === "detail" ? "detail" : "list";
+  const activeTab = viewParam === "detail" ? "detail" : viewParam === "risk" ? "risk" : "list";
 
   const { structure, loadingStructure, selectedEvent, selectedCrfCode } = useVisit();
 
@@ -486,6 +487,8 @@ export default function DashboardContent() {
           </Dialog>
         </main>
       )}
+      {/* ===== risk ===== */}
+      {activeTab === "risk" && <RiskView patients={patients} loadingPatients={loadingList} />}
 
       {/* ===== detail ===== */}
       {activeTab === "detail" && (

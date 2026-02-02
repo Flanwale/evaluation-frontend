@@ -2,7 +2,7 @@
 
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Activity, Users, FileEdit, ChevronLeft, ChevronRight } from "lucide-react";
+import { Activity, Users, FileEdit, ChevronLeft, ChevronRight, ShieldAlert } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { UserNav } from "@/components/user-nav";
 import { cn } from "@/lib/utils";
@@ -45,7 +45,9 @@ export default function UserDashboardLayout({ children }: { children: React.Reac
   const menuItems = [
     { label: "患者列表", icon: Users, view: "list", active: currentView === "list" },
     { label: "信息录入", icon: FileEdit, view: "detail", active: currentView === "detail" },
+    { label: "风险评估", icon: ShieldAlert, view: "risk", active: currentView === "risk" },
   ];
+
 
   return (
     <VisitProvider>
