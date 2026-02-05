@@ -325,7 +325,7 @@ export default function HomePage() {
       </main>
 
       <footer className="py-6 text-center text-xs text-slate-400 border-t bg-white">
-        <p>© 2026 Clinical Data Center. All rights reserved. | 隐私政策 | 服务条款 cicd test0120</p>
+        <p>© 2026 Clinical Data Center. All rights reserved. | 隐私政策 | 服务条款 dev test0202</p>
       </footer>
     </div>
   );
